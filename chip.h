@@ -1,25 +1,25 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-uint16_t opcode;			//Current opcode
-uint8_t memory[4096];		//4kB of memory
-uint8_t V[16];				//16 8-bit registers (0 - F) **VF is used as carry flag 
-uint16_t I;					//Address pointer
-uint16_t pc;				//Program counter
+uint16_t opcode;            //Current opcode
+uint8_t memory[4096];       //4kB of memory
+uint8_t V[16];              //16 8-bit registers (0 - F) **VF is used as carry flag 
+uint16_t I;                 //Address pointer
+uint16_t pc;                //Program counter
 
-uint8_t display[64 * 32];	//Screen. Convention is:
-							//	1 | white block
-							//	0 | black block
+uint8_t display[64 * 32];   //Screen. Convention is:
+                            //	1 | white block
+                            //	0 | black block
 
-uint8_t leys[16];			//Status of the 16 keys
+uint8_t leys[16];           //Status of the 16 keys
 
 uint8_t delayTimer;
-uint8_t soundTimer;			//Tone sounded when timer reaches 0. ticks at 60Hz. Tone not specified
+uint8_t soundTimer;         //Tone sounded when timer reaches 0. ticks at 60Hz. Tone not specified
 
-uint16_t stack[16];			//Stack
-uint16_t stackPointer;		//Stack pointer
+uint16_t stack[16];         //Stack
+uint16_t stackPointer;      //Stack pointer
 
-bool drawFlag = false;		//If set, screen will be notified to draw
+bool drawFlag = false;      //If set, screen will be notified to draw
 
 uint8_t fontset[80] =
 {
