@@ -1,4 +1,4 @@
 all:
-	true
+	false
 clean:
 	true
