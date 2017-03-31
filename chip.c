@@ -12,6 +12,10 @@ int init(){
 
 int load(char *rom){
 	FILE *file = fopen(rom, "r");
+	fseek(file, 0L, SEEK_END);
+	int size = ftell(file);
+	rewind(file);
+	fread(memory+0x200, 1, size, file);
 
 	return 0;
 }
@@ -41,7 +45,7 @@ int run(){
 
 	//fetch opcode
 	opcode = memory[pc] << 8 | memory[pc + 1];
-	printf("%x: ", opcode);
+	printf("\n%x: ", opcode);
 	
 	//decode opcode
 	switch(opcode & 0xF000){
