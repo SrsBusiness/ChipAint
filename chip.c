@@ -8,10 +8,13 @@ int init(){
 	stackPointer = 0;
 	delayTimer = 0;
 	pc = 0x200;
+
+	//loading fontset into address 0x50
 	memcpy(memory+0x50,fontset,80);
 	return 0;
 }
 
+//load file from argv[1] into address 0x200
 int load(char *rom){
 	FILE *file = fopen(rom, "r");
 	fseek(file, 0L, SEEK_END);
@@ -23,22 +26,25 @@ int load(char *rom){
 }
 
 int draw(){
-	for (int j = 0; j < 100; j++){
-		printf("\n");
-	}
-	int i = 0;
-	while(i < 2048){
-		if (i%64 == 0){
+	if (drawFlag){
+		for (int j = 0; j < 100; j++){
 			printf("\n");
 		}
-		if (display[i] == 1){
-			printf("#");
-		}
-		else{
-			printf(" ");
-		}
-		i++;
+		int i = 0;
+		while(i < 2048){
+			if (i%64 == 0){
+				printf("\n");
+			}
+			if (display[i] == 1){
+				printf("#");
+			}
+			else{
+				printf(" ");
+			}
+			i++;
 
+		}
+		drawFlag = false;
 	}
 	return 0;
 }
@@ -58,6 +64,30 @@ int run(){
 			stack[stackPointer] = pc;
 			stackPointer++;
 			pc = address;
+			break;
+		}
+		//3xkk - Skip next instruction if Vx = kk. The interpreter compares register Vx to kk, and if they are equal, increments the program counter by 2 (4).
+		case 0x3000:{
+			int x = (opcode & 0x0F00) >> 8;
+			int kk = opcode & 0x00FF;
+			if (V[x] == kk){
+				pc += 4;
+			}
+			else{
+				pc += 2;
+			}
+			break;
+		}
+		//4xkk - Skip next instruction if Vx != kk. The interpreter compares register Vx to kk, and if they are not equal, increments the program counter by 2 (4).
+		case 0x4000:{
+			int x = (opcode & 0x0F00) >> 8;
+			int kk = opcode & 0x00FF;
+			if (V[x] != kk){
+				pc += 4;
+			}
+			else{
+				pc += 2;
+			}
 			break;
 		}
 		//6xkk - Set Vx = kk.  The interpreter puts the value kk into register Vx.
@@ -89,6 +119,30 @@ int run(){
 		*See instruction 8xy3 for more information on XOR, and section 2.4, Display, for more information on the Chip-8 screen and sprites.
 		*/
 		case 0xD000:{
+			int x = V[(opcode & 0x0F00) >> 8];
+			int y = V[(opcode & 0x00F0) >> 4];
+			int n = opcode & 0x000F; 
+
+			V[0xF] = 0;
+
+			for (int i = 0; i < n; i++){
+				int drawLine = memory[I + i];
+				for (int j = 0; j < 8; j++){
+					int pixel = drawLine & (0x80 >> j);
+					if (pixel == 1){
+						int totalX = x + j;
+						int totalY = y + i;
+						int ind = totalY * 64 + totalX;
+
+						//Actual collision checking
+						if (display[ind] == 1){
+							V[0xF] = 1;
+						}
+						display[ind] ^= 1;
+					}
+				}
+			}
+			drawFlag = true;
 			pc += 2;
 			break;
 		}
@@ -103,8 +157,8 @@ int main(int argc, char **argv){
 	load(argv[1]);
 	int status;
 	do{
-		//draw();
 		status = run();
+		draw();
 	}while(status != 1);
 	return 0;
 }
