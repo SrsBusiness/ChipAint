@@ -7,13 +7,13 @@ int init(){
 	stackPointer = 0;
 	delayTimer = 0;
 	pc = 0x200;
-	return 1;
+	return 0;
 }
 
 int load(char *rom){
 	FILE *file = fopen(rom, "r");
 
-	return 1;
+	return 0;
 }
 
 int draw(){
@@ -34,6 +34,7 @@ int draw(){
 		i++;
 
 	}
+	return 0;
 }
 
 int run(){
@@ -46,7 +47,7 @@ int run(){
 	switch(opcode & 0xF000){
 		default:
 			printf("Unsupported Opcode\n");
-			return 0;
+			return 1;
 	}
 }
 
@@ -55,5 +56,5 @@ int main(int argc, char **argv){
 	load(argv[1]);
 	draw();
 	run();
-	return 1;
+	return 0;
 }
