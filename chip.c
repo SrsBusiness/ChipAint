@@ -57,7 +57,30 @@ int run(){
 	
 	//decode opcode
 	switch(opcode & 0xF000){
+		case 0x0000:{
+			switch(opcode & 0x00FF){
+				//00E0 - clear screen 
+				case 0x00E0:{
+					printf("Unsupported");
+					break;
 
+				}
+				//00EE - Return from a subroutine. The interpreter sets the program counter to the address at the top of the stack, then subtracts 1 from the stack pointer.
+				case 0x00EE:{
+					stackPointer--;
+					pc = stack[stackPointer];
+					pc += 2;
+					break;
+				}
+			}
+			break;
+		}
+		//1nnn - Jump to location nnn. The interpreter sets the program counter to nnn.
+		case 0x1000:{
+			uint16_t nnn = opcode & 0x0FFF;
+			pc = nnn;
+			break;
+		}
 		//2nnn - Call subroutine at nnn. The interpreter increments the stack pointer, then puts the current PC on the top of the stack. The PC is then set to nnn.
 		case 0x2000:{
 			uint16_t address = opcode & 0x0FFF;
@@ -111,7 +134,6 @@ int run(){
 			break;
 		}
 		/*
-		***********************WARNING NOT YET SUPPORTED******************************
 		*Dxyn - Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision. 
 		*The interpreter reads n bytes from memory, starting at the address stored in I. These bytes are then displayed as sprites on screen at coordinates (Vx, Vy). 
 		*Sprites are XORed onto the existing screen. If this causes any pixels to be erased, VF is set to 1, otherwise it is set to 0. 
