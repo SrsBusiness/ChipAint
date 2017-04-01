@@ -7,7 +7,10 @@ uint8_t V[16];              //16 8-bit registers (0 - F) **VF is used as carry f
 uint16_t I;                 //Address pointer
 uint16_t pc;                //Program counter
 
-uint8_t display[64 * 32];   //Screen. Convention is:
+#define CHIP8_DISPLAY_HEIGHT    32
+#define CHIP8_DISPLAY_WIDTH     64 
+
+uint8_t display[CHIP8_DISPLAY_HEIGHT * CHIP8_DISPLAY_WIDTH];   //Screen. Convention is:
                             //	1 | white block
                             //	0 | black block
 

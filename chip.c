@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "chip.h"
+#include "lcurses.h"
 
 
 int init(){
@@ -21,31 +22,29 @@ int load(char *rom){
 	int size = ftell(file);
 	rewind(file);
 	fread(memory+0x200, 1, size, file);
-
+    fclose(file);
 	return 0;
 }
 
-int draw(){
-	if (drawFlag){
-		for (int j = 0; j < 100; j++){
-			printf("\n");
-		}
-		int i = 0;
-		while(i < 2048){
-			if (i%64 == 0){
-				printf("\n");
-			}
-			if (display[i] == 1){
-				printf("#");
-			}
-			else{
-				printf(" ");
-			}
-			i++;
-
-		}
+int draw(int row, int col){
+    lcurses_save_cursor_position();
+	if (drawFlag) {
+        for (int r = 0; r < CHIP8_DISPLAY_HEIGHT; r++) {
+            lcurses_move_cursor(row + r, col);
+            for (int c = 0; c < CHIP8_DISPLAY_WIDTH; c++) {
+                int index = r * CHIP8_DISPLAY_WIDTH + c;
+                if (display[index] == 1) {
+                    lcurses_background_white();
+                    printf(" ");
+                } else {
+                    lcurses_background_black();
+                    printf(" ");
+                }
+            }
+        }
 		drawFlag = false;
 	}
+    lcurses_restore_cursor_position();
 	return 0;
 }
 
@@ -175,12 +174,19 @@ int run(){
 }
 
 int main(int argc, char **argv){
+    lcurses_clear_all();
+    lcurses_hide_cursor();
 	init();
 	load(argv[1]);
 	int status;
 	do{
+        lcurses_move_cursor(40, 1);
+        lcurses_clear_line();
 		status = run();
-		draw();
+		draw(1, 1);
+        getchar();
 	}while(status != 1);
+    lcurses_show_cursor();
+    lcurses_reset_attr();
 	return 0;
 }
