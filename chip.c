@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "chip.h"
 #include "lcurses.h"
 
+#define CLOCK_SPEED 1000
 
 int init(){
 	I = 0x0;
@@ -61,7 +63,10 @@ int run(){
 			switch(opcode & 0x00FF){
 				//00E0 - clear screen 
 				case 0x00E0:{
-					printf("Unsupported");
+					for(int i = 0; i < 32*64;i++){
+						display[i] = 0;
+					}
+					pc += 2;
 					break;
 
 				}
@@ -278,6 +283,13 @@ int run(){
 					pc += 2;
 					break;
 				}
+				//Fx1E - Set I = I + Vx. The values of I and Vx are added, and the results are stored in I.
+				case 0x001E:{
+					int x = (opcode & 0x0F00) >> 8;
+					I = I + V[x];
+					pc += 2;
+					break;
+				}
 				//Fx29 - Set I = location of sprite for digit Vx. 
 				//The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. See section 2.4, Display, for more information on the Chip-8 hexadecimal font.
 				case 0x0029:{
@@ -328,10 +340,10 @@ int run(){
 
 	if (soundTimer > 0){
 		soundTimer--;
+		printf("\a");
 	}
 	if (soundTimer <= 2){
 		soundTimer = 0;
-		printf("\a");
 	}
 
 
@@ -348,17 +360,19 @@ int debugDisplay(){
 }
 
 int main(int argc, char **argv){
+	clock_t tick;
     lcurses_clear_all();
     lcurses_hide_cursor();
 	init();
 	load(argv[1]);
 	int status;
 	do{
+		tick = clock();
         lcurses_move_cursor(40, 1);
         lcurses_clear_line();
 		status = run();
 		draw(1, 1);
-        getchar();
+        while(clock() - tick < CLOCK_SPEED){}
 	}while(status != 1);
     lcurses_show_cursor();
     lcurses_reset_attr();
