@@ -147,10 +147,10 @@ int run(){
 			V[0xF] = 0;
 
 			for (int i = 0; i < n; i++){
-				int drawLine = memory[I + i];
+				uint8_t drawLine = memory[I + i];
 				for (int j = 0; j < 8; j++){
-					int pixel = drawLine & (0x80 >> j);
-					if (pixel == 1){
+					uint8_t pixel = drawLine & (0b10000000 >> j);
+					if (pixel > 0){
 						int totalX = x + j;
 						int totalY = y + i;
 						int ind = totalY * 64 + totalX;
@@ -193,6 +193,16 @@ int run(){
 	}
 }
 
+int debugDisplay(){
+	printf("\n");
+	for (int i = 0; i < 32 * 64; i++) {
+		printf("%d",display[i]);
+		if (i % 64 == 0){
+			printf("\n");
+		}		
+	}
+}
+
 int main(int argc, char **argv){
     lcurses_clear_all();
     lcurses_hide_cursor();
@@ -203,6 +213,7 @@ int main(int argc, char **argv){
         lcurses_move_cursor(40, 1);
         lcurses_clear_line();
 		status = run();
+		//debugDisplay();
 		draw(1, 1);
         getchar();
 	}while(status != 1);
