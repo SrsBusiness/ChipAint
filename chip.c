@@ -130,11 +130,49 @@ int run(){
 		
 		case 0x8000:{
 			switch(opcode & 0x000F){
+				//8xy0 - Set Vx = Vy. Stores the value of register Vy in register Vx.
+				case 0x0000:{
+					int x = (opcode & 0x0F00) >> 8;
+					int y = (opcode & 0x00F0) >> 4;
+					V[x] = V[y];
+					pc += 2;
+					break;
+				}
 				//8xy2 - Set Vx = Vx AND Vy.
 				case 0x0002:{
 					int x = (opcode & 0x0F00) >> 8;
 					int y = (opcode & 0x00F0) >> 4;
 					V[x] = V[x] & V[y];
+					pc += 2;
+					break;
+				}
+				//8xy4 - Set Vx = Vx + Vy, set VF = carry. 
+				//The values of Vx and Vy are added together. If the result is greater than 8 bits (i.e., > 255,) VF is set to 1, otherwise 0. Only the lowest 8 bits of the result are kept, and stored in Vx.
+				case 0x0004:{
+					int x = (opcode & 0x0F00) >> 8;
+					int y = (opcode & 0x00F0) >> 4;
+					if(V[x] + V[y] > 255){
+						V[0xF] = 1;
+					}
+					else{
+						V[0xF] = 0;
+					}
+					V[x] = V[x] + V[y];
+					pc += 2;
+					break;
+				}
+				//8xy5 - Set Vx = Vx - Vy, set VF = NOT borrow.
+				//If Vx > Vy, then VF is set to 1, otherwise 0. Then Vy is subtracted from Vx, and the results stored in Vx.
+				case 0x0005:{
+					int x = (opcode & 0x0F00) >> 8;
+					int y = (opcode & 0x00F0) >> 4;
+					if (V[x] > V[y]){
+						V[0xF] = 1;
+					}
+					else{
+						V[0xF] = 0;
+					}
+					V[x] = V[x] - V[y];
 					pc += 2;
 					break;
 				}
@@ -233,6 +271,13 @@ int run(){
 					pc += 2;
 					break;
 				}
+				//Fx18 - Set sound timer = Vx. ST is set equal to the value of Vx.
+				case 0x0018:{
+					int x = (opcode & 0x0F00) >> 8;
+					soundTimer = V[x];
+					pc += 2;
+					break;
+				}
 				//Fx29 - Set I = location of sprite for digit Vx. 
 				//The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. See section 2.4, Display, for more information on the Chip-8 hexadecimal font.
 				case 0x0029:{
@@ -263,6 +308,7 @@ int run(){
 					for (int i = 0; i <= x; i++){
 						V[i] = memory[I + i];
 					}
+					I = (uint16_t) (I + x + 1);
 					pc += 2;
 					break;
 				}
@@ -279,6 +325,15 @@ int run(){
 	if (delayTimer <= 2){
 		delayTimer = 0;
 	}
+
+	if (soundTimer > 0){
+		soundTimer--;
+	}
+	if (soundTimer <= 2){
+		soundTimer = 0;
+		printf("\a");
+	}
+
 
 }
 
