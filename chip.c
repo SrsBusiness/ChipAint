@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "chip.h"
 #include "lcurses.h"
@@ -91,7 +92,7 @@ int run(){
 		//3xkk - Skip next instruction if Vx = kk. The interpreter compares register Vx to kk, and if they are equal, increments the program counter by 2 (4).
 		case 0x3000:{
 			int x = (opcode & 0x0F00) >> 8;
-			int kk = opcode & 0x00FF;
+			uint8_t kk = opcode & 0x00FF;
 			if (V[x] == kk){
 				pc += 4;
 			}
@@ -126,9 +127,33 @@ int run(){
 			pc += 2;
 			break;
 		}
+		
+		case 0x8000:{
+			switch(opcode & 0x000F){
+				//8xy2 - Set Vx = Vx AND Vy.
+				case 0x0002:{
+					int x = (opcode & 0x0F00) >> 8;
+					int y = (opcode & 0x00F0) >> 4;
+					V[x] = V[x] & V[y];
+					pc += 2;
+					break;
+				}
+			}
+			break;
+		}
 		//Annn - Set I = nnn. The value of register I is set to nnn.
 		case 0xA000:{
 			I = opcode & 0x0FFF;
+			pc += 2;
+			break;
+		}
+		//Cxkk - Set Vx = random byte AND kk. 
+		//The interpreter generates a random number from 0 to 255, which is then ANDed with the value kk. The results are stored in Vx. See instruction 8xy2 for more information on AND.
+		case 0xC000:{
+			int x = (opcode & 0x0F00) >> 8;
+			uint8_t kk = opcode & 0x00FF;
+			uint8_t random = rand() % 256;
+			V[x] = random & kk;
 			pc += 2;
 			break;
 		}
@@ -167,8 +192,56 @@ int run(){
 			pc += 2;
 			break;
 		}
+		case 0xE000:{
+			switch(opcode & 0x00FF){
+				//ExA1 - Skip next instruction if key with the value of Vx is not pressed.
+				//Checks the keyboard, and if the key corresponding to the value of Vx is currently in the up position, PC is increased by 2.
+				case 0x00A1:{
+					int x = (opcode & 0x0F00) >> 8;
+					if (keys[x] == 1){
+						pc += 4;
+					}
+					else{
+						pc += 2;
+					}
+				}
+				case 0x009E:{
+					int x = (opcode & 0x0F00) >> 8;
+					if (keys[x] == 0){
+						pc += 4;
+					}
+					else{
+						pc += 2;
+					}	
+				}
+			}
+			break;
+		}
 		case 0xF000:{
 			switch(opcode & 0x00FF){
+				//Fx07 - Set Vx = delay timer value. The value of DT is placed into Vx.
+				case 0x0007:{
+					int x = (opcode & 0x0F00) >> 8;
+					V[x] = delayTimer;
+					pc += 2;
+					break;
+				}
+				//Fx15 - Set delay timer = Vx. DT is set equal to the value of Vx.
+				case 0x0015:{
+					int x = (opcode & 0x0F00) >> 8;
+					delayTimer = V[x];
+					pc += 2;
+					break;
+				}
+				//Fx29 - Set I = location of sprite for digit Vx. 
+				//The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. See section 2.4, Display, for more information on the Chip-8 hexadecimal font.
+				case 0x0029:{
+					int x = (opcode & 0x0F00) >> 8;
+					uint8_t character = V[x];
+					I = 0x50 + character * 5;
+					pc += 2;
+					break;
+				}
 				//Fx33 - Store BCD representation of Vx in memory locations I, I+1, and I+2. 
 				//The interpreter takes the decimal value of Vx, and places the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.
 				case 0x0033:{
@@ -184,13 +257,29 @@ int run(){
 					pc += 2;
 					break;
 				}
+				//Fx65 - Read registers V0 through Vx from memory starting at location I. The interpreter reads values from memory starting at location I into registers V0 through Vx.
+				case 0x0065:{
+					int x = (opcode && 0x0F00) >> 8;
+					for (int i = 0; i <= x; i++){
+						V[i] = memory[I + i];
+					}
+					pc += 2;
+					break;
+				}
 			}
 			break;
 		}
 		default:
-			printf("Unsupported Opcode\n");
+			printf("Unsupported Opcode: %x \n", opcode);
 			return 1;
 	}
+	if (delayTimer > 0){
+		delayTimer--;
+	}
+	if (delayTimer <= 2){
+		delayTimer = 0;
+	}
+
 }
 
 int debugDisplay(){

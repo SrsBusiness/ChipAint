@@ -14,7 +14,7 @@ uint8_t display[CHIP8_DISPLAY_HEIGHT * CHIP8_DISPLAY_WIDTH];   //Screen. Convent
                             //	1 | white block
                             //	0 | black block
 
-uint8_t leys[16];           //Status of the 16 keys
+uint8_t keys[16];           //Status of the 16 keys
 
 uint8_t delayTimer;
 uint8_t soundTimer;         //Tone sounded when timer reaches 0. ticks at 60Hz. Tone not specified
