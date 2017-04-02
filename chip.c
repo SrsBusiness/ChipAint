@@ -149,7 +149,7 @@ int run(){
 			for (int i = 0; i < n; i++){
 				uint8_t drawLine = memory[I + i];
 				for (int j = 0; j < 8; j++){
-					uint8_t pixel = drawLine & (0b10000000 >> j);
+					uint8_t pixel = drawLine & (0x80 >> j);
 					if (pixel > 0){
 						int totalX = x + j;
 						int totalY = y + i;
@@ -213,7 +213,6 @@ int main(int argc, char **argv){
         lcurses_move_cursor(40, 1);
         lcurses_clear_line();
 		status = run();
-		//debugDisplay();
 		draw(1, 1);
         getchar();
 	}while(status != 1);
