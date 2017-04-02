@@ -167,6 +167,26 @@ int run(){
 			pc += 2;
 			break;
 		}
+		case 0xF000:{
+			switch(opcode & 0x00FF){
+				//Fx33 - Store BCD representation of Vx in memory locations I, I+1, and I+2. 
+				//The interpreter takes the decimal value of Vx, and places the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.
+				case 0x0033:{
+					int x = (opcode & 0x0F00) >> 8;
+					x = V[x];
+					uint8_t hundreds = (x - (x % 100)) / 100;
+					x -= 100 * hundreds;
+					uint8_t tens = (x - (x % 10)) / 10;
+					x -= 10 * tens;
+					memory[I] = hundreds;
+					memory[I+1] = tens;
+					memory[I+2] = x;
+					pc += 2;
+					break;
+				}
+			}
+			break;
+		}
 		default:
 			printf("Unsupported Opcode\n");
 			return 1;
