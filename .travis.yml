@@ -17,4 +17,4 @@ before_script:
     - sudo make
     - sudo make install
     - cd ../..
-script: make all
+script: make test
