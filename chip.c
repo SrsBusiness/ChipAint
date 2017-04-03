@@ -5,6 +5,7 @@
 #include "chip.h"
 #include "lcurses.h"
 
+//clock. Higher CLOCK_SPEED = higher T (slower cpu).
 #define CLOCK_SPEED 1000
 
 int init(){
@@ -184,6 +185,18 @@ int run(){
 			}
 			break;
 		}
+		//9xy0 - Skip next instruction if Vx != Vy. The values of Vx and Vy are compared, and if they are not equal, the program counter is increased by 2.
+		case 0x9000:{
+			int x = (opcode & 0x0F00) >> 8;
+			int y = (opcode & 0x00F0) >> 4;
+			if (V[x] != V[y]){
+				pc += 4;
+			}
+			else{
+				pc += 2;
+			}
+			break;
+		}
 		//Annn - Set I = nnn. The value of register I is set to nnn.
 		case 0xA000:{
 			I = opcode & 0x0FFF;
@@ -295,7 +308,7 @@ int run(){
 				case 0x0029:{
 					int x = (opcode & 0x0F00) >> 8;
 					uint8_t character = V[x];
-					I = 0x50 + character * 5;
+					I = 0x50 + (character * 5);
 					pc += 2;
 					break;
 				}
@@ -316,11 +329,11 @@ int run(){
 				}
 				//Fx65 - Read registers V0 through Vx from memory starting at location I. The interpreter reads values from memory starting at location I into registers V0 through Vx.
 				case 0x0065:{
-					int x = (opcode && 0x0F00) >> 8;
+					int x = (opcode & 0x0F00) >> 8;
 					for (int i = 0; i <= x; i++){
 						V[i] = memory[I + i];
 					}
-					I = (uint16_t) (I + x + 1);
+					I = I + x;
 					pc += 2;
 					break;
 				}
@@ -356,6 +369,13 @@ int debugDisplay(){
 		if (i % 64 == 0){
 			printf("\n");
 		}		
+	}
+}
+
+int debugMode(){
+	printf("Printing Registers");
+	for(int i=0; i<0xF;i++){
+		printf("\nV[%d] = %d", i, V[i]);
 	}
 }
 
